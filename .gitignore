@@ -4,6 +4,7 @@ SIA_Clean
 SIA-bak
 data_in/
 data_out/
+data_clean/
 cleanmail.py
 # Byte-compiled / optimized / DLL files
 __pycache__/

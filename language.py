@@ -7,11 +7,12 @@ get the language key & endpoint
 e.g. py .\language.py "https://<resname>.cognitiveservices.azure.com/" "<key>" ".\myfiles"
 '''
 
+import os
+import sys
+
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
 from tabulate import tabulate
-import os,sys
-
 
 # Authenticate the client using your key and endpoint
 def authenticate_client(p_endpoint:str,p_key:str):
@@ -58,7 +59,7 @@ def entity_recognition_example(p_client:str,p_folder_path:str):
             #  print(f"Document text: {myMail[idx]}")
                 print(f"Overall sentiment: {doc.sentiment}\n")
 
-            # Entity recognition - categorises known entities e.g. 
+            # Entity recognition - categorises known entities e.g.
             #  People, Organisations, Events, Dates, Numbers etc...
             # you can create your own with RegEx, keywords, ML learning etc...
             analysis_results=[["Entity","Value","confidence"]]
