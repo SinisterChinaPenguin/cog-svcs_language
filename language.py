@@ -17,6 +17,40 @@ from tabulate import tabulate
 from pprint import pprint
 import pathlib
 
+def remove_key_words(word_list):
+    remove_words=['Key Phrases','value','people','the financial conduct authority','new window']
+    for wd in remove_words:
+        if wd in word_list:
+            word_list.remove(wd)
+    return word_list
+
+def list_to_lists(my_list):
+    return [[el] for el in my_list]
+
+def dedupe_string(my_text):
+    words = my_text.lower().split()
+    txt_dedupe=" ".join(sorted(set(words), key=words.index))
+    return txt_dedupe
+
+def remove_trailing_opens(string1):
+    '''
+    Checks if a string ends in "opens" & removes unless a space preceeds "opens"
+    e.g. "Consumer Contracts RegulationOpens" becomes "Consumer Contracts Regulation"
+    this is becase we have "opens in a new window" floating around a lot
+
+    Parameters:
+    string1: the string to clean up
+
+    Returns: string (cleaned up text or the original if no work done)
+'''
+    end_str=string1[-5:] # last 5 chars of string
+    if end_str.lower() == 'opens':
+        char_before=string1[-6:-5] # check what character before opens is (is it a space?)
+        if char_before != ' ':
+            string1 = string1[:-5] # remove last 5 characters (i.e. opens from opens in new window)
+    return string1
+
+
 # Authenticate the client using your key and endpoint
 def authenticate_client(p_endpoint:str,p_key:str):
     '''
@@ -47,7 +81,7 @@ def entity_recognition_example(p_client:str,p_folder_path:str):
 
     Returns: VOID - just prints results
 '''
-
+    key_phrases_global=["Key Phrases"]
     for file_name in os.listdir(p_folder_path):
         file_path=p_folder_path + "\\" + file_name
         file_extension=pathlib.Path(file_path).suffix
@@ -57,8 +91,8 @@ def entity_recognition_example(p_client:str,p_folder_path:str):
         print("file is",file_path)
         with open(file_path) as fso:
             free_text=[fso.read()]
-        print("\n")
-        pprint(free_text)
+#        print("\n")
+#        pprint(free_text)
         print("\n")
         input("\nPress any key to continue....")
         try:
@@ -95,10 +129,13 @@ def entity_recognition_example(p_client:str,p_folder_path:str):
             # key phrase analysis - we do top 5 (they are ordered in importance)
             response=p_client.extract_key_phrases(documents = free_text)[0]
             if not response.is_error:
-                topfive=response.key_phrases[:5]
+                topfive=response.key_phrases[:8]
                 key_phrases=[["Key Phrases"]]
                 for phrase in topfive:
+                    phrase=remove_trailing_opens(phrase)
+                    phrase=dedupe_string(phrase)
                     key_phrases.append([phrase])
+                    key_phrases_global.append(phrase)
                 print("\n",tabulate(key_phrases,headers='firstrow'))
             else:
                 print("Error getting Key Phrases from document")
@@ -107,6 +144,8 @@ def entity_recognition_example(p_client:str,p_folder_path:str):
             os.system('cls')
         except Exception as err:
             print(F"Encountered exception. {err}")
+    
+    return key_phrases_global
 
 
 if len(sys.argv) < 4:
@@ -122,4 +161,9 @@ else:
     #print(endpoint)
 
 analytics_client = authenticate_client(endpoint,key)
-entity_recognition_example(analytics_client,path_to_folder)
+list_full_results=entity_recognition_example(analytics_client,path_to_folder)
+list_full_results = list(set(list_full_results))
+list_full_results = remove_key_words(list_full_results)
+list_full_results = list_to_lists(list_full_results)
+list_full_results.insert(0,["Key Phrases"])
+print("\n",tabulate(list_full_results,headers='firstrow'))
